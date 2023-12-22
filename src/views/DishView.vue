@@ -46,7 +46,7 @@
         <el-table-column prop="category" label="分类">
           <template #default="{ row }">
             <!-- 根据row.cid查找具有相同id的name -->
-            {{ categoryData.find((item) => item.id === row.cid)?.name }}
+            {{ categoryData.records!.find((item) => item.id === row.cid)?.name }}
           </template>
         </el-table-column>
         <el-table-column prop="price" label="售价"> </el-table-column>
@@ -105,7 +105,7 @@
         <el-select v-model="form.cid" placeholder="选择分类">
           <!-- 用categoryData内的数据生成选项 -->
           <el-option
-            v-for="item in categoryData"
+            v-for="item in categoryData.records"
             :key="item.id"
             :label="item.name"
             :value="item.id"
@@ -113,14 +113,8 @@
         </el-select>
       </el-form-item>
       <el-form-item label="菜品图片">
-        <el-upload
-          class="avatar-uploader"
-          action="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15"
-          :show-file-list="false"
-          :on-success="handleAvatarSuccess"
-          :before-upload="beforeAvatarUpload"
-        >
-          <img v-if="form.cover" :src="form.cover" class="avatar" />
+        <el-upload class="avatar-uploader" :show-file-list="false" :http-request="onUploadCover">
+          <img v-if="form.cover" :src="form.cover" class="avatar-uploader-img" />
           <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
         </el-upload>
       </el-form-item>
@@ -160,11 +154,18 @@
 </template>
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import type { UploadProps } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 import type { pageType, categoryType, dishType } from '@/types'
-import { getDishList, updateDish, deleteDish, enableDish, disableDish } from '@/api'
+import axios from 'axios'
+import {
+  getDishList,
+  updateDish,
+  deleteDish,
+  enableDish,
+  disableDish,
+  getCategoryList
+} from '@/api'
 
 const drawerVisible = ref(false)
 const drawerTitle = ref('')
@@ -175,27 +176,54 @@ const categoryStatus = ref([
   { label: '下架', status: 0 }
 ])
 
+interface categoryPageType extends pageType {
+  records?: categoryType[]
+}
 // 分类列表
-const categoryData = ref<categoryType[]>([
-  { name: '分类1', status: 0, id: 1 },
-  { name: '分类2', status: 0, id: 2 }
-])
+const categoryData = ref<categoryPageType>({})
 
-const handleAvatarSuccess: UploadProps['onSuccess'] = (response, uploadFile) => {
-  form.value.cover = URL.createObjectURL(uploadFile.raw!)
+// 刷新分类列表
+const refreshCategoryList = async () => {
+  console.log('refresh category list')
+  const records = await getCategoryList()
+  categoryData.value = records
+  console.log(categoryData.value)
 }
 
-const beforeAvatarUpload: UploadProps['beforeUpload'] = (rawFile) => {
-  if (rawFile.type !== 'image/jpeg') {
-    ElMessage.error('Avatar picture must be JPG format!')
-    return false
-  } else if (rawFile.size / 1024 / 1024 > 2) {
-    ElMessage.error('Avatar picture size can not exceed 2MB!')
-    return false
+interface pictureBadRes {
+  success: boolean
+  code: string
+  message: string
+  images?: string
+  data: { url: string }
+}
+
+// 上传头像
+const onUploadCover = async (file: any) => {
+  ElMessage.success('上传中...')
+  console.log('上传头像')
+  console.log(file)
+  // 将图片上传到sm.ms图床
+  const formData = new FormData()
+  formData.append('smfile', file.file)
+  const res = await axios.post('/image', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      Authorization: 'EbGJXCofcjs7WYDGf1KN5p6JuxJew8pJ'
+    }
+  })
+  const resData = res.data as pictureBadRes
+  if (resData.success) {
+    // 如果上传成功
+    console.log(res)
+    const pic = resData.data.url
+    form.value.cover = pic
+  } else {
+    // 如果重复上传
+    form.value.cover = resData.images
   }
-  return true
+  ElMessage.success('头像上传成功')
 }
-
 // 提交菜品变更
 const onSubmit = async () => {
   console.log('submit!')
@@ -248,12 +276,15 @@ function clickDelete(row: dishType) {
 // 关键字搜索
 const keyword = ref('')
 
+// dishPageType继承pageType
+interface dishPageType extends pageType {
+  records?: dishType[]
+}
 // 分页展示元素
-const page = ref<pageType>({
-  records: [] as dishType[],
-  total: 100,
-  size: 10,
-  current: 1
+const page = ref<dishPageType>({
+  current: 1,
+  size: 5,
+  total: 0
 })
 
 // 关键字搜索
@@ -325,12 +356,13 @@ const onBatchSaleDisableClick = async () => {
 // 刷新菜品列表
 const refreshDishList = async () => {
   console.log('获取菜品列表')
-  const records = await getDishList(page.value.current, page.value.size, keyword.value)
+  const records = await getDishList(page.value.current!, page.value.size!, keyword.value)
   page.value = records
 }
 
 onMounted(() => {
   refreshDishList()
+  refreshCategoryList()
 })
 </script>
 <style scoped>
@@ -355,6 +387,11 @@ onMounted(() => {
   width: 150px;
   height: 150px;
   display: block;
+}
+.avatar-uploader-img {
+  /* 拉伸图片适应父容器大小 */
+  width: 150px;
+  height: 150px;
 }
 </style>
 

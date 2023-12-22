@@ -14,8 +14,8 @@
         登陆店铺管理
       </p>
       <el-form label-position="top">
-        <el-form-item label="用户名">
-          <el-input v-model="loginForm.username" />
+        <el-form-item label="">
+          <el-input v-model="loginForm.phone" />
         </el-form-item>
         <el-form-item label="密码">
           <el-input type="password" v-model="loginForm.password" />
@@ -25,7 +25,7 @@
             style="width: 100%; background: linear-gradient(to right, #0089ba, #b15db9)"
             color="#626aef"
             @click="login(loginForm)"
-            >登陆</el-button
+            >登录</el-button
           >
         </el-form-item>
       </el-form>
@@ -40,7 +40,7 @@ import type { loginType } from '@/types'
 import { login } from '@/api'
 
 const loginForm = ref<loginType>({
-  username: '',
+  phone: '',
   password: ''
 })
 </script>

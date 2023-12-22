@@ -13,7 +13,7 @@ import type {
 import { ElMessage } from 'element-plus'
 
 export async function login(data: loginType) {
-  const res: responseType = await instance.post('/login', data)
+  const res: responseType = await instance.post('/rest/login', data)
   const resData: loginResType = res.data
   if (res.code === 1) {
     ElMessage.success('登陆成功')
@@ -32,10 +32,10 @@ export async function getDishList(page: number, pagesize: number, key?: string) 
     key = undefined
   }
   console.log(page, pagesize, key)
-  const res: responseType = await instance.get('/dish/list', {
+  const res: responseType = await instance.get('/dish/rest/list', {
     params: {
       page: page,
-      pagesize: pagesize,
+      size: pagesize,
       key: key
     }
   })
@@ -48,12 +48,12 @@ export async function getDishList(page: number, pagesize: number, key?: string) 
 }
 
 // 获取分类列表
-export async function getCategoryList(page: number, pagesize: number) {
+export async function getCategoryList(page?: number, pagesize?: number) {
   console.log('获取分类列表')
-  const res: responseType = await instance.get('/category/list', {
+  const res: responseType = await instance.get('/category/rest/list', {
     params: {
       page: page,
-      pagesize: pagesize
+      size: pagesize
     }
   })
   if (res.code === 0) {
@@ -130,7 +130,7 @@ export async function disableDish(ids: Array<number>) {
 
 // 获取饭店信息
 export async function getRestaurantInfo() {
-  const res: responseType = await instance.get('/restaurant/info')
+  const res: responseType = await instance.get('/rest/info')
   if (res.code != 1) {
     ElMessage.error(res.msg || '糟糕，出错啦')
   }
@@ -141,7 +141,7 @@ export async function getRestaurantInfo() {
 // 更新饭店信息
 export async function updateRestaurantInfo(setting: restaurantType) {
   // 携带category
-  const res: responseType = await instance.post('/restaurant/update', setting)
+  const res: responseType = await instance.post('/rest/update', setting)
   if (res.code === 1) {
     ElMessage.success('更新成功')
     return true
@@ -169,10 +169,10 @@ export async function getOrderList(
     end = undefined
   }
   console.log(page, pagesize, key)
-  const res: responseType = await instance.get('/order/list', {
+  const res: responseType = await instance.get('/order/rest/list', {
     params: {
       page: page,
-      pagesize: pagesize,
+      size: pagesize,
       key: key,
       begin: begin,
       end: end
@@ -188,9 +188,9 @@ export async function getOrderList(
 
 // 获取订单详情
 export async function getOrderDetail(id: number) {
-  const res: responseType = await instance.get('/order/detail', {
+  const res: responseType = await instance.get('/orderdetail/rest/byoid', {
     params: {
-      id: id
+      oid: id
     }
   })
   if (res.code === 0) {
@@ -199,4 +199,20 @@ export async function getOrderDetail(id: number) {
   const resData: orderDetailListItemType[] = res.data
   console.log(resData)
   return resData
+}
+
+// 更新订单状态
+export async function updateOrderStatus(id: number, status: number) {
+  // 携带category
+  const res: responseType = await instance.post('/order/rest/update', {
+    id: id,
+    status: status
+  })
+  if (res.code === 1) {
+    ElMessage.success('更新成功')
+    return true
+  } else {
+    ElMessage.error(res.msg || '糟糕，出错啦')
+    return false
+  }
 }

@@ -119,11 +119,13 @@ const onSubmit = async () => {
 }
 
 // 分页展示元素
-const page = ref<pageType>({
-  records: [] as categoryType[],
-  total: 100,
+interface categoryPageType extends pageType {
+  records?: categoryType[]
+}
+const page = ref<categoryPageType>({
+  current: 1,
   size: 10,
-  current: 1
+  total: 0
 })
 
 // 分页切换

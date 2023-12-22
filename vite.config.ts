@@ -14,7 +14,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://192.168.123.142:80',
         changeOrigin: true,
         ws: true, // 允许websocket代理
         rewrite: (path) => path.replace(/^\/api/, '')

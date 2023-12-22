@@ -36,9 +36,13 @@
     <div class="card_body">
       <el-table :data="page.records" style="width: 100%" border>
         <el-table-column prop="id" label="订单号"> </el-table-column>
-        <el-table-column prop="user.name" label="用户"> </el-table-column>
-        <el-table-column prop="time" label="下单时间"> </el-table-column>
-        <el-table-column prop="status" label="订单状态"> </el-table-column>
+        <el-table-column prop="user.username" label="用户"> </el-table-column>
+        <el-table-column prop="create_time" label="下单时间"> </el-table-column>
+        <el-table-column prop="status" label="订单状态">
+          <template #default="{ row }">
+            {{ orderStatus[row.status] }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作">
           <template #default="{ row }">
             <el-button-group>
@@ -94,7 +98,7 @@
             用户名
           </div>
         </template>
-        {{ drawer.order.user.name }}
+        {{ drawer.order.user.username }}
       </el-descriptions-item>
       <el-descriptions-item>
         <template #label>
@@ -158,7 +162,7 @@ import { Delete, Dish, List } from '@element-plus/icons-vue'
 import { onMounted, ref } from 'vue'
 import type { pageType, orderListItemType, orderDetailListItemType } from '@/types'
 import { ElMessageBox } from 'element-plus'
-import { getOrderList, getOrderDetail } from '@/api'
+import { getOrderList, getOrderDetail, updateOrderStatus } from '@/api'
 
 onMounted(() => {
   refreshOrderList()
@@ -186,6 +190,8 @@ const drawer = ref({
   detail: [] as orderDetailListItemType[]
 })
 
+const orderStatus = ['已支付', '已出餐', '已完成', '已退单']
+
 // 出餐按钮
 const onSendClick = async (row: orderListItemType) => {
   console.log(row)
@@ -196,6 +202,8 @@ const onSendClick = async (row: orderListItemType) => {
   })
     .then(() => {
       console.log('确定')
+      updateOrderStatus(row.id, 1)
+      refreshOrderList()
     })
     .catch(() => {
       console.log('取消')
@@ -223,6 +231,8 @@ const onRefundClick = async (row: orderListItemType) => {
   })
     .then(() => {
       console.log('确定')
+      updateOrderStatus(row.id, 3)
+      refreshOrderList()
     })
     .catch(() => {
       console.log('取消')
@@ -234,8 +244,8 @@ const refreshOrderList = async () => {
   console.log('refresh')
   const val = searchForm.value
   const res = await getOrderList(
-    page.value.current,
-    page.value.size,
+    page.value.current!,
+    page.value.size!,
     val.oid,
     val.date[0],
     val.date[1]

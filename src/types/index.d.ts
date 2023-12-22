@@ -11,7 +11,7 @@
 // 用户类型
 export interface userType {
   id?: number
-  name?: string
+  username?: string
   phone?: string
   password?: string
   status?: number
@@ -146,10 +146,10 @@ export interface orderDetailType {
 
 // 页面类型
 export interface pageType {
-  records: Array
-  total: number
-  size: number
-  current: number
+  records?: Array
+  total?: number
+  size?: number
+  current?: number
 }
 
 // 返回的数据外层
@@ -161,7 +161,7 @@ export interface responseType {
 
 // 登陆发送的数据
 export interface loginType {
-  username: string
+  phone: string
   password: string
 }
 
@@ -176,7 +176,6 @@ export interface orderListItemType {
   id: number
   user: userType
   address: addressType
-  time?: string
   status?: number
   totalprice?: number
   create_time?: string
